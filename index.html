@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Stream</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            overflow: auto; /* Enable full scrolling for body */
+        }
+
+        #container {
+            width: 1920px;
+            height: 1080px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: auto;
+        }
+
+        video {
+            width: 1920px;
+            height: 1080px;
+            background-color: black;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <video id="video" autoplay muted></video>
+    </div>
+    <script>
+        const video = document.getElementById('video');
+        const hlsUrl = "http://192.168.1.213:8080/hls/printer.m3u8";
+        let hls;
+
+        // Function to initialize the HLS stream
+        function initializeStream() {
+            if (Hls.isSupported()) {
+                if (hls) {
+                    hls.destroy(); // Clean up any previous instance
+                }
+                hls = new Hls({
+                    liveSyncDurationCount: 3,
+                    liveMaxLatencyDurationCount: 5,
+                    enableWorker: true,
+                    lowLatencyMode: true
+                });
+                hls.loadSource(hlsUrl);
+                hls.attachMedia(video);
+
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    if (data.fatal) {
+                        console.error("Stream error:", data);
+                        alert("A fatal error occurred with the stream.");
+                    }
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = hlsUrl;
+            } else {
+                alert("Your browser does not support HLS playback.");
+            }
+        }
+
+        // Load the stream on page load
+        initializeStream();
+
+        // Toggle play/pause on click
+        video.addEventListener('click', () => {
+            if (video.paused) {
+                initializeStream(); // Reload the stream to resume from the live edge
+                video.play();
+            } else {
+                video.pause();
+            }
+        });
+    </script>
+</body>
+</html>
